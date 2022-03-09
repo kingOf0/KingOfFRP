@@ -13,11 +13,13 @@ version = "1.0"
 repositories {
     google()
     mavenCentral()
+    maven("https://jitpack.io")
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation("me.carleslc.Simple-YAML:Simple-Yaml:1.7.3")
 }
 
 tasks.withType<KotlinCompile> {
