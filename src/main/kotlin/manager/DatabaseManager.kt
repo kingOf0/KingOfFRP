@@ -1,6 +1,7 @@
 package manager
 
 import LOGGER
+import base.Character
 import base.CharacterType
 import database.IDatabase
 import database.MySqlDatabase
@@ -42,8 +43,16 @@ object DatabaseManager : IManager("DatabaseManager") {
         database.save(id, characterType)
     }
 
+    suspend fun save(character: Character) {
+        database.save(character)
+    }
+
     internal suspend fun setup() {
         database.initialize()
+    }
+
+    suspend fun loadAll() {
+        database.loadAll()
     }
 
 }

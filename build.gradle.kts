@@ -19,7 +19,13 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+
     implementation("me.carleslc.Simple-YAML:Simple-Yaml:1.7.3")
+    implementation("org.xerial:sqlite-jdbc:3.27.2")
+
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.72")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+
 }
 
 tasks.withType<KotlinCompile> {

@@ -6,10 +6,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import base.CharacterType
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import manager.*
 import java.util.logging.Logger
 
@@ -17,7 +14,7 @@ val LOGGER = Logger.getLogger("K FRP")
 
 @Composable
 @Preview
-fun App() {
+fun startApp() {
     var text by remember { mutableStateOf("Hello, World!") }
 
     MaterialTheme {
@@ -30,21 +27,17 @@ fun App() {
 fun main() = application {
     FileManager.initialize()
     DatabaseManager.initialize()
+    CharacterStatManager.initialize()
+    CharacterTypeManager.initialize()
+    CharacterManager.initialize()
 
-    CoroutineScope(Dispatchers.IO).launch {
+    runBlocking {
         DatabaseManager.setup()
-
-        CharacterStatManager.initialize()
-        CharacterTypeManager.initialize()
-        CharacterManager.initialize()
-    }.invokeOnCompletion {
-        if (it != null) {
-            it.printStackTrace()
-            return@invokeOnCompletion
-        }
-        Window(onCloseRequest = ::exitApplication) {
-            App()
-        }
+        DatabaseManager.loadAll()
     }
 
+
+    Window(onCloseRequest = ::exitApplication) {
+        startApp()
+    }
 }

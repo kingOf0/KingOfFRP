@@ -17,7 +17,7 @@ object FileManager : IManager("FileManager") {
     lateinit var privateLogger: FileWriter
 
     override fun load(): Boolean {
-        config = YamlFile(File("config.yml"))
+        config = YamlFile(File("config.yml")).apply { load() }
         File("log.txt").apply {
             if (!exists()) createNewFile()
             privateLogger = FileWriter(this, true)

@@ -9,8 +9,10 @@ import kotlinx.coroutines.launch
 object CharacterTypeManager : IManager("CharacterTypeManager") {
 
     val types = HashMap<String, CharacterType>()
+    val default = CharacterType("default")
 
     override fun load(): Boolean {
+        default
         return true
     }
 

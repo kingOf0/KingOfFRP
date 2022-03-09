@@ -4,9 +4,10 @@ import base.CharacterStat
 
 object CharacterStatManager : IManager("CharacterStatManager") {
 
-    private val stats = HashMap<String, CharacterStat>()
+    val stats = HashMap<String, CharacterStat>()
 
     override fun load(): Boolean {
+        BaseStat.values()
         return true
     }
 
