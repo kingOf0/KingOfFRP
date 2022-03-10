@@ -45,7 +45,8 @@ abstract class BaseDatabase(name: String) : IDatabase {
                     "health integer" +
                     ");")
             statement.executeUpdate("create table if not exists character(" +
-                    "name text not null primary key," +
+                    "id text not null primary key," +
+                    "name text," +
                     "type text," +
                     "stats text,"+
                     "level integer," +
@@ -80,14 +81,16 @@ abstract class BaseDatabase(name: String) : IDatabase {
             resultSet = statement.executeQuery("select * from character") ?: throw SQLException("Couldn't retrieve result set")
 
             while (resultSet.next()) {
+                val id = resultSet.getString("id")
                 val name = resultSet.getString("name")
                 val type = resultSet.getString("type")
                 val level = resultSet.getInt("level")
                 val maxHealth = resultSet.getInt("maxHealth")
                 val health = resultSet.getInt("health")
 
-                val character = Character(CharacterTypeManager.types[type]!!, name)
-                character.stats = resultSet.getStats("stats")
+                val character = Character(id, CharacterTypeManager.types[type]!!)
+                character.characterStats = resultSet.getStats("stats")
+                character.name = name
                 character.level = level
                 character.maxHealth = maxHealth
                 character.health = health
@@ -178,7 +181,7 @@ abstract class BaseDatabase(name: String) : IDatabase {
     }
 
     private suspend fun instantiateDefaultCharacters() {
-        CharacterBuilder(CharacterTypeManager.default)
+        CharacterBuilder("example", CharacterTypeManager.default)
             .setName("Example Character")
             .setHealth(20)
             .setStat(BaseStat.LUCK, 1)
@@ -211,7 +214,7 @@ abstract class BaseDatabase(name: String) : IDatabase {
             connection = getConnection() ?: throw SQLException("Couldn't retrieve connection")
             statement = connection.createStatement() ?: throw SQLException("Couldn't retrieve statement")
 
-            statement.executeUpdate("insert into character(name, type, stats, level, maxHealth, health, exp) values('${character.name}', '${character.type.id}', '${character.stats.entries.joinToString { "${it.key}:${it.value}" }}', ${character.level}, ${character.maxHealth}, ${character.health}, 0);")
+            statement.executeUpdate("insert into character(id, name, type, stats, level, maxHealth, health, exp) values('${character.id}', ''${character.name}', '${character.type.id}', '${character.characterStats.entries.joinToString { "${it.key}:${it.value}" }}', ${character.level}, ${character.maxHealth}, ${character.health}, 0);")
         } finally {
             close(statement)
             close(connection)

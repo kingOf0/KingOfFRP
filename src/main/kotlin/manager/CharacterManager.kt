@@ -6,21 +6,21 @@ import base.CharacterType
 
 object CharacterManager : IManager("CharacterManager") {
 
-    val characters = ArrayList<Character>()
+    val characters = HashMap<String, Character>()
 
     override fun load(): Boolean {
         return true
     }
 
     fun add(character: Character) {
-        characters.add(character)
+        characters[character.id] = (character)
     }
 
 }
 
-class CharacterBuilder(type: CharacterType) {
+class CharacterBuilder(id: String, type: CharacterType) {
 
-    private var character = Character(type)
+    private var character = Character(id, type)
 
     fun setStat(stat: CharacterStat, value: Int): CharacterBuilder {
         character.setStat(stat, value)
@@ -47,7 +47,7 @@ class CharacterBuilder(type: CharacterType) {
     }
 
     fun register(): CharacterBuilder {
-        CharacterManager.characters += character
+        CharacterManager.characters[character.id] = character
         return this
     }
 

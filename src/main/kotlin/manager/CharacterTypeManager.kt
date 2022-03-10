@@ -35,9 +35,13 @@ object CharacterTypeManager : IManager("CharacterTypeManager") {
 
 }
 
-class CharacterTypeBuilder(private val id: String, name: String) {
+class CharacterTypeBuilder(private val id: String) {
 
-    private val type = CharacterType(name)
+    private val type = CharacterType(id)
+
+    constructor(id: String, name: String) : this(id) {
+        this.type.name = type.name
+    }
 
     fun setStat(stat: CharacterStat, value: Int): CharacterTypeBuilder {
         type.setStat(stat, value)
@@ -46,6 +50,11 @@ class CharacterTypeBuilder(private val id: String, name: String) {
 
     fun setHealth(health: Int): CharacterTypeBuilder {
         type.baseHealth = health
+        return this
+    }
+
+    fun setName(name: String): CharacterTypeBuilder {
+        type.name = name
         return this
     }
 
