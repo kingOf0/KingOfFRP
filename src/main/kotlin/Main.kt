@@ -1,28 +1,37 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.HorizontalScrollbar
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
+import androidx.compose.material.ButtonDefaults.buttonColors
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.loadImageBitmap
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import base.Character
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import manager.*
-import java.io.BufferedInputStream
 import java.io.File
-import java.io.FileReader
 import java.util.*
 import java.util.logging.Logger
-import kotlin.math.min
+import kotlin.random.Random
+
+//todo: Empty This file. Move all the code to the other files.
+//todo: Make it adaptive and responsive.
+//todo: Make a Dice Creator Dialog.
+//todo: Make Characters scrollable. (Use grids to show characters?)
+
 
 val LOGGER = Logger.getLogger("K FRP")
 
@@ -55,6 +64,23 @@ fun startApp() {
         .setHealth(60)
         .register()
 
+    CharacterTypeBuilder("wood_elf")
+        .setName("Wood Elf")
+        .setHealth(20)
+        .setStat(CharacterStatManager.BaseStat.STRENGTH, 1)
+        .register()
+    CharacterTypeBuilder("high_elf")
+        .setName("High Elf")
+        .setHealth(20)
+        .setStat(CharacterStatManager.BaseStat.STRENGTH, 1)
+        .register()
+    CharacterTypeBuilder("human")
+        .setName("Human")
+        .setHealth(20)
+        .setStat(CharacterStatManager.BaseStat.STRENGTH, 1)
+        .register()
+
+
     MaterialTheme {
         tabs()
     }
@@ -79,20 +105,57 @@ fun tabs() {
     }
 }
 
+val dices = listOf(3, 6, 20, 999)
+val diceFormat = "Son Zar: %d"
+val lastDice = mutableStateOf(diceFormat.format(0))
+val openCharacterCreateDialog = mutableStateOf(false)
+
+@Composable
+fun buildLastDice() {
+    val state = remember { lastDice }
+    Card(elevation = 10.dp, modifier = Modifier.offset(30.dp, 30.dp)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(text = state.value, modifier = Modifier.padding(15.dp, 15.dp))
+        }
+    }
+}
+
 @Composable
 fun buildDices() {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.offset(20.dp, 20.dp)) {
+        for (dice in dices) {
+            val state = remember { mutableStateOf("Zar at!") }
+            Button(onClick = {
+                val random = Random.nextInt(1, dice + 1)
+                state.value = random.toString()
+                lastDice.value = diceFormat.format(random)
+            }) {
+                Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                    Text("$dice zar", modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Spacer(modifier = Modifier.padding(20.dp))
+                    Text(text = state.value, modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
+            }
+        }
+    }
 
 }
 
 @Composable
 fun buildImages() {
     val root = File("images")
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.offset(20.dp, 20.dp)) {
         root.list()?.forEach { name ->
-            Card {
+            Card() {
                 LOGGER.info(name)
                 val bitmap = loadImageBitmap(File(root, name).inputStream())
-                Image(bitmap, name, modifier = Modifier.width(200.dp))
+                Button(onClick = {
+                    SettingsManager.backgroundImage.value = bitmap
+                }, colors = buttonColors(backgroundColor = Color.Transparent)) {
+
+                    Image(bitmap, name, modifier = Modifier.width(200.dp))
+                }
             }
         }
     }
@@ -103,10 +166,89 @@ fun buildImages() {
 fun buildCharacters() {
     Card(modifier = Modifier.fillMaxSize().offset(10.dp, 10.dp)) {
         Row (horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (entry in CharacterManager.characters) {
+            val characters = mutableStateOf(CharacterManager.characters)
+            for (entry in characters.value) {
                 buildCharacter(entry.value)
             }
         }
+        Column(verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.CenterHorizontally) {
+            Button(onClick = {
+                openCharacterCreateDialog.value = true
+            }, colors = buttonColors(backgroundColor = Color.Transparent)) {
+                Text("Yeni Karakter Ekle")
+            }
+        }
+    }
+
+    buildCharacterCreateDialog()
+}
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun buildCharacterCreateDialog() {
+    if (openCharacterCreateDialog.value) {
+        val builder = CharacterBuilder(UUID.randomUUID().toString())
+
+        val name = remember { mutableStateOf("") }
+        val type = remember { mutableStateOf(CharacterTypeManager.default) }
+        AlertDialog(
+            onDismissRequest = {
+
+            },
+            text = {
+                Column {
+                    TextField(name.value, onValueChange = {
+                        name.value = it
+                        builder.setName(it)
+                    }, modifier = Modifier.padding(10.dp), label = {
+                        Text("İsim Giriniz")
+                    })
+
+
+                    var lastState = remember { mutableStateOf(FontWeight.Normal) }
+                    //todo: make this shit scrolalble
+                    Column {
+                        for (type1 in CharacterTypeManager.types) {
+
+                            val fontWeightMutableState = remember { mutableStateOf(FontWeight.Normal) }
+                            Card(onClick = {
+                                lastState.value = FontWeight.Normal
+                                lastState = fontWeightMutableState
+                                fontWeightMutableState.value = FontWeight.Bold
+                                type.value = type1.value
+                            }) {
+                                Text(text = type1.value.name, fontWeight = fontWeightMutableState.value)
+                            }
+
+                        }
+                    }
+                }
+            },
+            buttons = {
+                Column(
+                    modifier = Modifier.padding(all = 8.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Button(modifier = Modifier.fillMaxWidth(), onClick = {
+                        builder.register()
+                        CoroutineScope(Dispatchers.IO).launch {
+                            builder.save()
+                        }.invokeOnCompletion {
+                            it?.printStackTrace()
+                        }
+                        openCharacterCreateDialog.value = false
+                    }) {
+                        Text("Karakter Oluştur!")
+                    }
+                    Button(modifier = Modifier.fillMaxWidth(), onClick = {
+                        openCharacterCreateDialog.value = false
+                    }) {
+                        Text("İptal")
+                    }
+                }
+            }
+        )
     }
 }
 
@@ -143,6 +285,7 @@ fun buildStats(character: Character) {
 
 fun main() = application {
     FileManager.initialize()
+    SettingsManager.initialize()
     DatabaseManager.initialize()
     CharacterStatManager.initialize()
     CharacterTypeManager.initialize()
@@ -157,4 +300,16 @@ fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "KingOf FRP") {
         startApp()
     }
+    if (SettingsManager.startStreamWindow) {
+        Window(onCloseRequest = ::exitApplication, title = "KingOf FRP") {
+            startStreamWindow()
+        }
+    }
+}
+
+@Composable
+@Preview
+fun startStreamWindow() {
+    Image(SettingsManager.backgroundImage.value, "Background")
+    buildLastDice()
 }

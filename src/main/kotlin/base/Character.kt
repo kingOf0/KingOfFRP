@@ -1,10 +1,8 @@
 package base
 
 import manager.CharacterTypeManager
-import java.util.*
-import kotlin.collections.HashMap
 
-class Character(val id: String, val type: CharacterType, var name: String, var characterStats: MutableMap<CharacterStat, Int> = HashMap(), var maxHealth: Int, var level: Int) {
+class Character(val id: String, var type: CharacterType, var name: String, var characterStats: MutableMap<CharacterStat, Int> = HashMap(), var maxHealth: Int, var level: Int) {
 
     var health: Int = maxHealth
 

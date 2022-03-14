@@ -20,6 +20,8 @@ object CharacterManager : IManager("CharacterManager") {
 
 class CharacterBuilder(id: String, type: CharacterType) {
 
+    constructor(id: String) : this(id, CharacterTypeManager.default)
+
     private var character = Character(id, type)
 
     fun setStat(stat: CharacterStat, value: Int): CharacterBuilder {
@@ -30,6 +32,10 @@ class CharacterBuilder(id: String, type: CharacterType) {
     fun setHealth(health: Int): CharacterBuilder {
         character.health = health
         return this
+    }
+
+    fun setType(type: CharacterType) {
+        character.type = type
     }
 
     fun setName(name: String): CharacterBuilder {

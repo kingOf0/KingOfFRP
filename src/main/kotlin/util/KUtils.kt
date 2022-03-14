@@ -12,6 +12,7 @@ object KUtils {
 
     fun ResultSet.getStats(column: String): HashMap<CharacterStat, Int> {
         val stats = getString(column)
+        if (stats.isEmpty()) return hashMapOf()
         return HashMap(stats.split(",").associate {
             val split = it.split(":")
             Pair(CharacterStatManager.stats[split[0]]!!, split[1].toInt())

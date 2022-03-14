@@ -2,14 +2,16 @@ package database
 
 import LOGGER
 import base.Character
-import base.CharacterStat
 import base.CharacterType
 import base.CustomCharacterStat
 import manager.*
-import util.KUtils.serialize
 import manager.CharacterStatManager.BaseStat
 import util.KUtils.getStats
-import java.sql.*
+import util.KUtils.serialize
+import java.sql.Connection
+import java.sql.ResultSet
+import java.sql.SQLException
+import java.sql.Statement
 
 abstract class BaseDatabase(name: String) : IDatabase {
 
@@ -88,7 +90,7 @@ abstract class BaseDatabase(name: String) : IDatabase {
                 val maxHealth = resultSet.getInt("maxHealth")
                 val health = resultSet.getInt("health")
 
-                val character = Character(id, CharacterTypeManager.types[type]!!)
+                val character = Character(id, CharacterTypeManager.types.getOrDefault(type, CharacterTypeManager.default))
                 character.characterStats = resultSet.getStats("stats")
                 character.name = name
                 character.level = level
@@ -214,7 +216,7 @@ abstract class BaseDatabase(name: String) : IDatabase {
             connection = getConnection() ?: throw SQLException("Couldn't retrieve connection")
             statement = connection.createStatement() ?: throw SQLException("Couldn't retrieve statement")
 
-            statement.executeUpdate("insert into character(id, name, type, stats, level, maxHealth, health, exp) values('${character.id}', ''${character.name}', '${character.type.id}', '${character.characterStats.entries.joinToString { "${it.key}:${it.value}" }}', ${character.level}, ${character.maxHealth}, ${character.health}, 0);")
+            statement.executeUpdate("insert into character(id, name, type, stats, level, maxHealth, health, exp) values('${character.id}', '${character.name}', '${character.type.id}', '${character.characterStats.entries.joinToString { "${it.key}:${it.value}" }}', ${character.level}, ${character.maxHealth}, ${character.health}, 0);")
         } finally {
             close(statement)
             close(connection)
